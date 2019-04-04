@@ -105,7 +105,7 @@ public class Problem186 {
 		
 		
 		//TODO: swap 2 elements that have their difference smaller than summs diff
-		
+		//compute the dist between the elems to find them and invoke swap()
 		
 		//repeat the process until there are no more elements to move between the subsets
 		if(valueFromMaxListInRange || valueFromMinListInRange){
@@ -113,6 +113,11 @@ public class Problem186 {
 		}
 		
 
+	}
+	
+	private void swap(SumIntList source, int fromSource, SumIntList target, int fromTarget) {
+		moveElement(fromSource, source, target);
+		moveElement(fromTarget, target, source);
 	}
 	
 	private void moveElement(Integer element, SumIntList source, SumIntList target) {
