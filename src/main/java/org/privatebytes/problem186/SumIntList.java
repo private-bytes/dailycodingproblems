@@ -10,7 +10,18 @@ public class SumIntList extends ArrayList<Integer> {
 
 	private static final long serialVersionUID = 1L;
 	private long elementsSum;
+	
+	private String name;
 
+	
+	public SumIntList(String name) {
+		this.name=name;
+	}
+	
+	public String getName() {
+		return name;
+	}
+	
 	public long getElementsSum() {
 		return elementsSum;
 	}
@@ -43,7 +54,7 @@ public class SumIntList extends ArrayList<Integer> {
 	public Integer remove(int index) {
 		Integer r = super.remove(index);
 
-		modifySum(r);
+		modifySum(-r);
 
 		return r;
 	}
@@ -60,9 +71,16 @@ public class SumIntList extends ArrayList<Integer> {
 
 	@Override
 	public boolean remove(Object o) {
-		throw new UnsupportedOperationException();
+		
+		boolean result = super.remove(o);
+		
+		if(result) {
+			modifySum(-1*(int)o);
+		}
+		
+		return result;
 	}
-
+	
 	@Override
 	public List<Integer> subList(int fromIndex, int toIndex) {
 		throw new UnsupportedOperationException();
