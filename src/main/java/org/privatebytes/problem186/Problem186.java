@@ -90,6 +90,11 @@ public class Problem186 {
 		boolean valueFromMaxListInRange = isValueInRange(valueFromMaxList, acceptableRange);
 		boolean valueFromMinListInRange = isValueInRange(valueFromMinList, acceptableRange);
 
+		
+		//TODO: compute the new dist between the 2 subsets
+		//if new dist is smaller then the elem can be moved
+		
+		
 		if (valueFromMaxListInRange) {
 			if (valueFromMinListInRange) {
 
