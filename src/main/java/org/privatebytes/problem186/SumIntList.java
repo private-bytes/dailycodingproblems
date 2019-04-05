@@ -102,4 +102,9 @@ public class SumIntList extends ArrayList<Integer> {
 		elementsSum = newSum;
 	}
 
+	
+	@Override
+	public String toString() {
+		return name + "(" + elementsSum + ") --> " + super.toString();
+	}
 }
