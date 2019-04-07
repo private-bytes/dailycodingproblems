@@ -1,10 +1,9 @@
 package org.privatebytes.problem186;
 
 import java.util.Arrays;
-import java.util.Optional;
-import java.util.function.Predicate;
+import java.util.Objects;
+import java.util.function.IntPredicate;
 
-import org.apache.commons.lang3.Range;
 import org.apache.commons.lang3.tuple.Pair;
 
 /**
@@ -18,9 +17,7 @@ import org.apache.commons.lang3.tuple.Pair;
 public class Problem186 {
 
 	public static void main(String[] args) {
-		//
-//		int[] input = { 5, 10, 15, 20, 25, 200, 30, 35, -39, 50, 55, 60, 65 };
-		int[] input = { -1, -2, -3, -4, -5, -6, -7, -8, -9, -10, 180 }; // do not erase -- fix the moving strategy
+		int[] input = {34, 98, 3, 5, 6, 102, 10, 11, 76, 45, 13, 46, 14, 22, 88, 90, 31};
 
 		Problem186 p186 = new Problem186();
 
@@ -32,12 +29,16 @@ public class Problem186 {
 	}
 
 	private static void print(int[] ss1, int[] ss2) {
-		System.out.println(Arrays.stream(ss1).reduce(0, (a, b) -> a + b) + " --> " + Arrays.toString(ss1));
-		System.out.println(Arrays.stream(ss2).reduce(0, (a, b) -> a + b) + " --> " + Arrays.toString(ss2));
+		System.out.println(Arrays.stream(ss1).sum() + " --> " + Arrays.toString(ss1));
+		System.out.println(Arrays.stream(ss2).sum() + " --> " + Arrays.toString(ss2));
 
 	}
 
 	public Pair<int[], int[]> solve(int[] input) {
+		if(Objects.isNull(input) || input.length == 0) {
+			throw new IllegalArgumentException("Input cannot be null or empty");
+		}
+
 		Pair<SumIntList, SumIntList> subsets = initSubsets(input);
 
 		SumIntList ss1 = subsets.getLeft();
@@ -45,8 +46,7 @@ public class Problem186 {
 
 		minimizeDifference(ss1, ss2);
 
-		return Pair.of(ss1.stream().mapToInt(Integer::intValue).toArray(),
-				ss2.stream().mapToInt(Integer::intValue).toArray());
+		return Pair.of(ss1.stream().mapToInt(Integer::intValue).toArray(), ss2.stream().mapToInt(Integer::intValue).toArray());
 	}
 
 	private void minimizeDifference(SumIntList ss1, SumIntList ss2) {
@@ -54,71 +54,84 @@ public class Problem186 {
 		System.out.println(ss1);
 		System.out.println(ss2);
 
-		long diff = ss1.getElementsSum() - ss2.getElementsSum();
-
-		if (diff == 0) {
-			return;
-		}
-
 		SumIntList maxList = maxSum(ss1, ss2);
 		SumIntList minList = minSum(ss1, ss2);
 
-		boolean elementsMoved = moveElements(maxList, minList);
-		boolean elementsSwapped = swapElements(maxList, minList);
+		long diff = maxList.getElementsSum() - minList.getElementsSum();
 
-		// repeat the process until there are no more elements to moved between the
-		// subsets
-		if (elementsMoved || elementsSwapped) {
+		if(diff <= 1) {
+			System.out.println("stopping [ difference too small: " + diff + "]");
+			return;
+		}
+
+		boolean elementsMoved = moveElements(maxList, minList);
+		boolean elementsSwapped = false;
+
+		if( ! elementsMoved) {
+			elementsSwapped = swapElements(maxList, minList);
+		}
+
+		if(elementsMoved || elementsSwapped) {
 			minimizeDifference(ss1, ss2);
 		}
 
 	}
 
+	/**
+	 * Find in each list the element that has the most impact in reducing the difference between the subsets sum.
+	 * Between the two elements pick the one with a bigger impact.
+	 * 
+	 * @param maxList
+	 * @param minList
+	 * @return
+	 */
 	private boolean moveElements(SumIntList maxList, SumIntList minList) {
-		long diff = maxList.getElementsSum() - minList.getElementsSum();
+		long initialDiff = maxList.getElementsSum() - minList.getElementsSum();
+		long targetDist = initialDiff / 2;
 
-		// this is the number that IDEALLY have need to move from one list to the other
-		long targetDistance = diff / 2;
+		int fromMaxList = findClosest(maxList, - targetDist, e -> e > 0);
+		int fromMinList = findClosest(minList, targetDist, e -> e < 0);
 
-		Pair<Integer, Long> valueFromMaxList = findClosestTo(maxList, targetDistance, e -> e > 0); // want a negative
-																									// number from here
-		Pair<Integer, Long> valueFromMinList = findClosestTo(minList, -targetDistance, e -> e < 0); // want a positve
-																									// number from here
+		long newDiff1 = Math.abs((maxList.getElementsSum() - fromMaxList) - (minList.getElementsSum() + fromMaxList));
+		long newDiff2 = Math.abs((maxList.getElementsSum() + fromMinList) - (minList.getElementsSum() - fromMinList));
 
-		Range<Long> acceptableRange = Range.between(0l, Math.abs(diff) - 1);
+		if(targetDist == 0L || (Math.min(newDiff1, newDiff2) >= initialDiff)) {
+			return false;
+		} else if(newDiff1 < newDiff2) {
+			return moveElement(fromMaxList, maxList, minList);
+		} else if(newDiff1 > newDiff2) {
+			return moveElement(fromMinList, minList, maxList);
+		}
 
-		boolean valueFromMaxListInRange = isValueInRange(valueFromMaxList, acceptableRange);
-		boolean valueFromMinListInRange = isValueInRange(valueFromMinList, acceptableRange);
+		return false;
 
-		
-		//TODO: compute the new dist between the 2 subsets
-		//if new dist is smaller then the elem can be moved
-		
-		
-		if (valueFromMaxListInRange) {
-			if (valueFromMinListInRange) {
+	}
 
-				long dist1 = valueFromMaxList.getRight();
-				long dist2 = valueFromMinList.getRight();
+	private int findClosest(SumIntList subset, long target, IntPredicate filter) {
 
-				if (dist1 < dist2) {
-					return moveElement(valueFromMaxList.getLeft(), maxList, minList);
-				} else {
-					return moveElement(valueFromMinList.getLeft(), minList, maxList);
-				}
-			} else {
-				return moveElement(valueFromMaxList.getLeft(), maxList, minList);
-			}
-		} else {
-			if (valueFromMinListInRange) {
-				return moveElement(valueFromMinList.getLeft(), minList, maxList);
+		int result = 0;
+
+		long minDist = Integer.MAX_VALUE;
+		for(Integer val : subset) {
+			long currentDist = Math.abs(val - target);
+
+			if(filter.test(val) && currentDist < minDist) {
+				minDist = currentDist;
+				result = val;
 			}
 		}
 
-		System.out.println("Nothing to move !!!");
-		return false;
+		return result;
 	}
 
+	/**
+	 * Find an element in each list such that their distance is smaller than half of the current subsets sum difference
+	 * and swap them.
+	 * 
+	 * @param maxList
+	 * @param minList
+	 * @return
+	 */
 	private boolean swapElements(SumIntList maxList, SumIntList minList) {
 
 		Pair<Integer, Integer> candidates = null;
@@ -126,21 +139,20 @@ public class Problem186 {
 		long initialDist = maxList.getElementsSum() - minList.getElementsSum();
 		long maxDist = 2 * initialDist - 1;
 		long candidatesDist = maxDist;
-		for (Integer val1 : maxList) {
-//			long sum = maxList.getElementsSum() - val1;
-			for (Integer val2 : minList) {
 
-				long newDist = Math
-						.abs(maxList.getElementsSum() - val1 + val2 - (minList.getElementsSum() - val2 + val1));
+		for(Integer val1 : maxList) {
+			for(Integer val2 : minList) {
+				long newSumMaxList = maxList.getElementsSum() - val1 + val2;
+				long newSumMinList = minList.getElementsSum() - val2 + val1;
+				long newDist = Math.abs(newSumMaxList - newSumMinList);
 
-				if (newDist < initialDist) {
-//				if (sum + val2 < maxList.getElementsSum()) {
+				if(newDist < initialDist) {
 					long currentDist = Math.abs(val1 - val2);
 
-					if (currentDist < candidatesDist) {
+					if(currentDist < candidatesDist) {
 						candidates = Pair.of(val1, val2);
 						candidatesDist = currentDist;
-						if (currentDist == initialDist) {
+						if(currentDist == initialDist) {
 							break;
 						}
 					}
@@ -148,7 +160,7 @@ public class Problem186 {
 			}
 		}
 
-		if (candidates != null) {
+		if(candidates != null) {
 			swap(maxList, candidates.getLeft(), minList, candidates.getRight());
 			return true;
 		}
@@ -158,16 +170,16 @@ public class Problem186 {
 	}
 
 	private void swap(SumIntList source, int fromSource, SumIntList target, int fromTarget) {
-		System.out.println("swapping(" + fromSource + ", " + fromTarget + ")");
+		System.out.println("swapping[" + source.getName() + "(" + fromSource + "), " + target.getName() + "(" + fromTarget + ")]");
 		moveElement(fromSource, source, target);
 		moveElement(fromTarget, target, source);
 	}
 
 	private boolean moveElement(Integer element, SumIntList source, SumIntList target) {
-		if (source.remove(element)) {
+		if(source.remove(element)) {
 			target.add(element);
 
-			System.out.println("moved " + element + " to " + target.getName());
+			System.out.println("moved[" + element + ": " + source.getName() + " --> " + target.getName() + "]");
 			System.out.println(source);
 			System.out.println(target);
 
@@ -175,27 +187,6 @@ public class Problem186 {
 		}
 
 		return false;
-	}
-
-	private boolean isValueInRange(Pair<Integer, Long> value, Range<Long> range) {
-		return value != null && range.contains(value.getRight());
-	}
-
-	private Pair<Integer, Long> findClosestTo(SumIntList subset, long target, Predicate<Integer> filter) {
-
-		Pair<Integer, Long> result = null;
-
-		long min_dist = Integer.MAX_VALUE;
-		for (Integer val : subset) {
-			long current_dist = Math.abs(val - target);
-
-			if (filter.test(val) && current_dist < min_dist) {
-				min_dist = current_dist;
-				result = Pair.of(val, min_dist);
-			}
-		}
-
-		return result;
 	}
 
 	private Pair<SumIntList, SumIntList> initSubsets(int[] input) {
@@ -210,19 +201,19 @@ public class Problem186 {
 
 			pickBestList(ss1, ss2, n1).add(n1);
 
-			if (i != j) {
+			if(i != j) {
 				pickBestList(ss1, ss2, n2).add(n2);
 			}
 
 			i++;
 			j--;
-		} while (i <= j);
+		} while(i <= j);
 
 		return Pair.of(ss1, ss2);
 	}
 
 	private SumIntList pickBestList(SumIntList ss1, SumIntList ss2, int number) {
-		if (number >= 0) {
+		if(number >= 0) {
 			return minSum(ss1, ss2);
 		}
 
@@ -230,11 +221,11 @@ public class Problem186 {
 	}
 
 	private SumIntList minSum(SumIntList s1, SumIntList s2) {
-		if (s1.getElementsSum() == s2.getElementsSum()) {
+		if(s1.getElementsSum() == s2.getElementsSum()) {
 			return minSize(s1, s2);
 		}
 
-		if (s1.getElementsSum() <= s2.getElementsSum()) {
+		if(s1.getElementsSum() <= s2.getElementsSum()) {
 			return s1;
 		}
 
@@ -242,11 +233,11 @@ public class Problem186 {
 	}
 
 	private SumIntList maxSum(SumIntList s1, SumIntList s2) {
-		if (s1.getElementsSum() == s2.getElementsSum()) {
+		if(s1.getElementsSum() == s2.getElementsSum()) {
 			return minSize(s1, s2);
 		}
 
-		if (s1.getElementsSum() > s2.getElementsSum()) {
+		if(s1.getElementsSum() > s2.getElementsSum()) {
 			return s1;
 		}
 
@@ -254,7 +245,7 @@ public class Problem186 {
 	}
 
 	private SumIntList minSize(SumIntList s1, SumIntList s2) {
-		if (s1.size() <= s2.size()) {
+		if(s1.size() <= s2.size()) {
 			return s1;
 		}
 

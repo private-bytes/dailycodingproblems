@@ -28,12 +28,15 @@ public class SumIntList extends ArrayList<Integer> {
 	
 	@Override
 	public void add(int index, Integer element) {
+		System.out.println("adding[ " + name + ": " + element + "]");
 		modifySum(element);
 		super.add(index, element);
 	}
 
 	@Override
 	public boolean add(Integer e) {
+		System.out.println("adding[ " + name + ": " + e + "]");
+
 		modifySum(e);
 		return super.add(e);
 	}
