@@ -1,4 +1,4 @@
-package org.privatebytes.problem1;
+package org.privatebytes.problem001;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +13,7 @@ import java.util.stream.Stream;
  * Bonus: Can you do this in one pass?
  *
  */
-public class Problem1 {
+public class Problem001 {
 
 	public static void main(String[] args) {
 		List<Integer> numbers = Stream.of(10, 15, 3, 7).collect(Collectors.toList());
