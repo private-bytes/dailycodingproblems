@@ -9,17 +9,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * This problem was asked by Amazon.
- * At a popular bar, each customer has a set of favorite drinks, and will happily accept any drink among this set. For example, in the following situation, customer 0 will be satisfied with drinks 0, 1, 3, or 6.
- * preferences = {
- *  0: [0, 1, 3, 6],
- *  1: [1, 4, 7],
- *  2: [2, 4, 7, 5],
- *  3: [3, 2, 5],
- *  4: [5, 8]
- * }
- * A lazy bartender working at this bar is trying to reduce his effort by limiting the drink recipes he must memorize. Given a dictionary input such as the one above, return the fewest number of drinks he must learn in order to satisfy all customers.
- * For the input above, the answer would be 2, as drinks 1 and 5 will satisfy everyone.
+ * This problem was asked by Amazon. At a popular bar, each customer has a set
+ * of favorite drinks, and will happily accept any drink among this set. For
+ * example, in the following situation, customer 0 will be satisfied with drinks
+ * 0, 1, 3, or 6. preferences = { 0: [0, 1, 3, 6], 1: [1, 4, 7], 2: [2, 4, 7,
+ * 5], 3: [3, 2, 5], 4: [5, 8] } A lazy bartender working at this bar is trying
+ * to reduce his effort by limiting the drink recipes he must memorize. Given a
+ * dictionary input such as the one above, return the fewest number of drinks he
+ * must learn in order to satisfy all customers. For the input above, the answer
+ * would be 2, as drinks 1 and 5 will satisfy everyone.
  *
  */
 public class Problem297 {
@@ -30,15 +28,28 @@ public class Problem297 {
 //		int[][] prefs = new int[][] { { 0, 1, 3, 6 }, { 1, 4, 7 }, { 2, 4, 7, 5 }, { 3, 2, 5 }, { 5, 8 } };
 
 		// will use brute force
-		int[][] prefs = new int[][] { { 0, 1, 4, 5 }, { 0, 1, 3 }, { 0, 2, 7 }, { 0, 2 }, { 1, 6, 5 }, { 2, 8 },
-				{ 3 } };
+		int[][] prefs = new int[][] { { 0, 1, 4, 5 }, { 0, 1, 3 }, { 0, 2, 7 }, { 0, 2 }, { 1, 6, 5 }, { 2, 8 }, { 3 } };
+
+//		int[][] prefs = new int[][] {{1,11},{2,12},{3,13},{4,14},{5,11},{6,12},{5,7,13},{8,14},{9},{10}};
+
+//		int[][] prefs = new int[][] { { 1, 2, 3, 4, 5, 6, 100 }, { 1, 2, 3, 4, 5, 6, 100 }, { 1, 2, 3, 4, 5, 6, 100 },
+//				{ 1, 2, 3, 4, 5, 6, 100 }, { 1, 2, 3, 4, 5, 6, 100 }, { 1, 2, 3, 4, 5, 6, 100 },
+//				{ 1, 7, 8, 9, 10, 11, 12, 200 }, { 1, 7, 8, 9, 10, 11, 12, 200 }, { 1, 7, 8, 9, 10, 11, 12, 200 },
+//				{ 7, 8, 9, 10, 11, 12, 200 }, { 7, 8, 9, 10, 11, 12, 200 }, { 7, 8, 9, 10, 11, 12, 200 },
+//				{ 13, 14, 15, 16, 17, 18, 300, 0 }, { 13, 14, 15, 16, 17, 18, 300 }, { 13, 14, 15, 16, 17, 18, 300 },
+//				{ 13, 14, 15, 16, 17, 18, 300 }, { 13, 14, 15, 16, 17, 18, 300 }, { 13, 14, 15, 16, 17, 18, 300 },
+//				{ 19, 20, 21, 22, 23, 24, 400 }, { 19, 20, 21, 22, 23, 24, 400 }, { 19, 20, 21, 22, 23, 24, 400 },
+//				{ 19, 20, 21, 22, 23, 24, 400 }, { 19, 20, 21, 22, 23, 24, 400 }, { 19, 20, 21, 22, 23, 24, 400 },
+//				{ 25, 26, 27, 28, 29, 30, 500 }, { 25, 26, 27, 28, 29, 30, 500 }, { 25, 26, 27, 28, 29, 30, 500 },
+//				{ 25, 26, 27, 28, 29, 30, 500,888 }, { 25, 26, 27, 28, 29, 30, 500 }, { 25, 26, 27, 28, 29, 30, 500 },
+//				{ 700,900,901,902 } };
 
 		Map<Integer, Set<Integer>> clientPreferences = initPreferences(prefs);
 		Set<Integer> drinksRecipies = new Problem297().solve(clientPreferences);
 
 		System.out.println(drinksRecipies.size() + " --> " + drinksRecipies);
 	}
-	
+
 	private static Map<Integer, Set<Integer>> initPreferences(int[]... drinks) {
 		Map<Integer, Set<Integer>> result = new HashMap<>();
 		for (int i = 0; i < drinks.length; i++) {
@@ -49,15 +60,36 @@ public class Problem297 {
 	}
 
 	public Set<Integer> solve(Map<Integer, Set<Integer>> clientPreferences) {
+		System.out.println("----------------------------------------");
+		System.out.println("Input " + clientPreferences);
+
+		Set<Integer> partialResult = partialSolution(clientPreferences);
+
+		// remove clients satisfied by partial solution (reduces the number of subsets
+		// analyzed in brute force solution)
+		clientPreferences.entrySet().removeIf(e -> !Collections.disjoint(e.getValue(), partialResult));
+
 		Set<Integer> result = smartSolution(clientPreferences);
 
 		if (result.size() > 2) {
 			result = bruteForceSolution(clientPreferences, result);
 		}
 
+		result.addAll(partialResult);
+
+		System.out.println("Output " + result);
+		System.out.println("----------------------------------------");
+
 		return result;
 	}
 
+	/**
+	 * Finds a possible solutions. Not necessarily the best one. Will be used an
+	 * input for the brute force solution
+	 * 
+	 * @param clientPreferences
+	 * @return
+	 */
 	private static Set<Integer> smartSolution(Map<Integer, Set<Integer>> clientPreferences) {
 		Map<Integer, Set<Integer>> drinkPreferences = drinksDemand(clientPreferences);
 		Set<Integer> satisfiedClients = new HashSet<>();
@@ -81,19 +113,70 @@ public class Problem297 {
 		return result;
 	}
 
+	/**
+	 * Finds some results that are guaranteed to be present in the final solution.
+	 * 
+	 * @param clientPreferences
+	 * @return
+	 */
+	private static Set<Integer> partialSolution(Map<Integer, Set<Integer>> clientPreferences) {
+		Map<Integer, Set<Integer>> drinkPreferences = drinksDemand(clientPreferences);
+		Set<Integer> result = new HashSet<>();
+
+		for (Map.Entry<Integer, Set<Integer>> entry : clientPreferences.entrySet()) {
+
+			Set<Integer> clientDrinks = entry.getValue();
+
+			// client prefers only 1 drink
+			// all drinks preferred by this client are not preferred by anybody else
+			if (clientDrinks.size() == 1
+					|| clientPreferences.entrySet().stream().filter(e -> e.getKey() != entry.getKey())
+							.allMatch(e -> Collections.disjoint(e.getValue(), clientDrinks))) {
+				result.add(clientDrinks.iterator().next()); //pick one drink as part of the final solution
+				
+				System.out.println("Drinks " + clientDrinks + " preferred only by client " + entry.getKey());
+			}
+		}
+
+		System.out.println("Partial solution " + result);
+
+		return result;
+	}
+
+	/**
+	 * Applies brute force on all possible solutions with smaller size than the
+	 * existingSolution
+	 * 
+	 * @param clientPreferences
+	 * @param existingSolution
+	 * @return
+	 */
 	private static Set<Integer> bruteForceSolution(Map<Integer, Set<Integer>> clientPreferences,
 			Set<Integer> existingSolution) {
 		Set<Integer> allDrinks = clientPreferences.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
 
 		Set<Integer> result = existingSolution;
 
-		Set<Set<Integer>> drinkSubsets = getSubsets(allDrinks, result.size() - 1);
+		// start with all subsets of size 1
+		Set<Set<Integer>> currentSubsets = allDrinks.stream().map(d -> Set.of(d)).collect(Collectors.toSet());
 
-		for (Set<Integer> ss : drinkSubsets) {
-			if (isValidSolution(ss, clientPreferences) && ss.size() < result.size()) {
-				System.out.println("Brute force solution " + ss);
-				result = ss;
+		for (int i = 2; i <= result.size() - 1; i++) {
+			// generate all subsets of size "i"
+			Set<Set<Integer>> drinkSubsets = getSubsets(allDrinks, currentSubsets);
+
+			System.out.println("Brute forcing " + drinkSubsets.size() + " of size " + i);
+
+			for (Set<Integer> ss : drinkSubsets) {
+				if (isValidSolution(ss, clientPreferences) && ss.size() < result.size()) {
+					System.out.println("Brute force solution " + ss);
+
+					// the first solution found with brute force is the best one (there won't be any
+					// other subset with smaller size to analyze)
+					return result = ss;
+				}
 			}
+
+			currentSubsets = drinkSubsets;
 		}
 
 		return result;
@@ -131,39 +214,28 @@ public class Problem297 {
 		return drinkPreferences;
 	}
 
-	private static Set<Set<Integer>> getSubsets(Set<Integer> drinks, int maxSize) {
-		Set<Set<Integer>> result = new HashSet<>();
-
-		if (drinks.isEmpty() || maxSize < 1) {
-			return result; // no need for an empty subset
+	private static Set<Set<Integer>> getSubsets(Set<Integer> drinks, Set<Set<Integer>> currentSubsets) {
+		if (drinks.isEmpty()) {
+			return Collections.emptySet();
 		}
 
-		drinks.forEach(d -> result.add(Set.of(d)));
-		generateSubsets(drinks, result, maxSize);
-
-		return result;
+		return generateSubsets(drinks, currentSubsets);
 	}
 
-	private static void generateSubsets(Set<Integer> origSet, Set<Set<Integer>> subsets, int maxSize) {
+	private static Set<Set<Integer>> generateSubsets(Set<Integer> origSet, Set<Set<Integer>> subsets) {
 
 		Set<Set<Integer>> newSubsets = new HashSet<>();
 		for (Set<Integer> subset : subsets) {
-
-			if (subset.size() < maxSize) {
-				for (Integer e : origSet) {
-					if (!subset.contains(e)) {
-						Set<Integer> newSubset = new HashSet<>(subset);
-						newSubset.add(e);
-						newSubsets.add(newSubset);
-					}
+			for (Integer e : origSet) {
+				if (!subset.contains(e)) {
+					Set<Integer> newSubset = new HashSet<>(subset);
+					newSubset.add(e);
+					newSubsets.add(newSubset);
 				}
 			}
 		}
 
-		if (!newSubsets.isEmpty()) {
-			generateSubsets(origSet, newSubsets, maxSize);
-			subsets.addAll(newSubsets);
-		}
+		return newSubsets;
 	}
 
 	private static boolean isValidSolution(Set<Integer> drinks, Map<Integer, Set<Integer>> clientPreferences) {
