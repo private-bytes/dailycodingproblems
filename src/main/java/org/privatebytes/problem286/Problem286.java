@@ -46,7 +46,7 @@ public class Problem286 {
 			partialSkyline.entrySet().forEach(e -> e.setValue(Math.max(e.getValue(), height)));
 		}
 
-		AtomicInteger prevHeight = new AtomicInteger( - 1);
+		AtomicInteger prevHeight = new AtomicInteger(-1);
 		List<Pair<Integer, Integer>> result = skyline.entrySet().stream().filter(e -> {
 			boolean keep = e.getValue() != prevHeight.get();
 			prevHeight.set(e.getValue());
