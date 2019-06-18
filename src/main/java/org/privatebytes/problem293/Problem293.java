@@ -17,7 +17,6 @@ public class Problem293 {
 	private long solve(int[] stones) {
 		Pyramid out = new Pyramid();
 		Pyramid tmp = new Pyramid();
-		tmp.height=stones[0];
 
 		int neededHeight = 1;
 		while (tmp.end < stones.length - 1) {

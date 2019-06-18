@@ -68,6 +68,15 @@ public class Problem293Test {
 		
 	}
 	
+	@Test
+	void test_with_100000_elements_equal() {
+		String stones = IntStream.range(1, 100000).boxed().map(i -> 42147).collect(Collectors.toList()).toString();
+		
+		long cost = solve(stones);
+		
+		assertEquals(2438288244L, cost);
+	}
+	
 	
 	@Test
 	void test_with_100000_elements_ordered_descending() {
@@ -93,6 +102,7 @@ public class Problem293Test {
 		long cost = unit.solve(input);
 		long duration = System.currentTimeMillis()-start;
 		System.out.println("Time: " + duration + "ms");
+		System.out.println("---------------------------------------");
 		
 		return cost;
 	}
